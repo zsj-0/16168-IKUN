@@ -1,0 +1,89 @@
+C51 COMPILER V9.54   MAIN                                                                  07/09/2024 17:45:34 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.l
+                    -st) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          //使用说明：5v和GND接到洞洞板上，舵机、蓝牙、风扇、小灯、继电器连到洞洞板
+             -上
+   2          //          舵机信号线接P20。风扇继电器信号线接P22，小灯继电器信号线接P21，低�
+             -��平开启
+   3          #include <REGX52.H>
+   4          #include "Delay.h"
+   5          #include "UART.h"
+   6          #include "LCD1602.h"
+   7          #include "TIMER0.h"
+   8          
+   9          sbit steer1=P2^0;
+  10          
+  11          unsigned int cnt=1,compare=1;
+  12          unsigned char  dat=0;//串口接收数据
+  13          unsigned char  i=0;
+  14          unsigned char  buff[5]=0;
+  15          bit  flag_REC=0; 
+  16          bit  flag    =0;
+  17          
+  18          void main()
+  19          {
+  20   1              UART_Init();            //串口初始化
+  21   1              LCD_Init();
+  22   1              Timer0Init();
+  23   1              while(1)
+  24   1              {
+  25   2                      LCD_ShowNum(1,16,compare,1);
+  26   2                      LCD_ShowHexNum(1,1,dat,2);
+  27   2      //              LCD_ShowChar(1,3,dat);
+  28   2                      if(dat%16==1){LCD_ShowString(2,1,"W-on  L-on  S-on");compare=3;P1_0=1;P1_2=1;}//wind light servo
+  29   2                      else if(dat%16==2){LCD_ShowString(2,1,"W-on  L-off S-on");compare=3;P1_0=1;P1_2=1;}
+  30   2                      else if(dat%16==3){LCD_ShowString(2,1,"W-off L-on  S-on");compare=3;P1_0=0;P1_2=1;}
+  31   2                      else if(dat%16==4){LCD_ShowString(2,1,"W-off L-off S-on");compare=3;P1_0=0;P1_2=1;}
+  32   2                      
+  33   2                      else if(dat%16==5){LCD_ShowString(2,1,"W-on  L-on  S-of");compare=1;P1_0=1;P1_2=0;}
+  34   2                      else if(dat%16==6){LCD_ShowString(2,1,"W-on  L-off S-of");compare=1;P1_0=1;P1_2=0;}
+  35   2                      else if(dat%16==7){LCD_ShowString(2,1,"W-off L-on  S-of");compare=1;P1_0=0;P1_2=0;}
+  36   2                      else {LCD_ShowString(2,1,"W-off L-off S-of");compare=1;P1_0=0;P1_2=0;}
+  37   2                      
+  38   2      //              LCD_ShowString(1,6,buff);
+  39   2                      Delay(10);
+  40   2              }
+  41   1      }
+  42          
+  43          void UART_Routine() interrupt 4
+  44          {
+  45   1          if(RI)
+  46   1          {
+  47   2             RI=0;
+  48   2             dat=SBUF;
+  49   2             buff[i]=dat;
+  50   2              }
+  51   1      }
+  52          
+C51 COMPILER V9.54   MAIN                                                                  07/09/2024 17:45:34 PAGE 2   
+
+  53          void Timer0_Routine() interrupt 1
+  54          {
+  55   1              TL0 = 0x33;
+  56   1              TH0 = 0xFE;
+  57   1              cnt++;
+  58   1              if(cnt>40){cnt=1;}//20ms
+  59   1              if(cnt<=compare){steer1=1;}
+  60   1              else {steer1=0;}
+  61   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    319    ----
+   CONSTANT SIZE    =    136    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
